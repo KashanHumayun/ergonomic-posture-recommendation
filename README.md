@@ -1,35 +1,52 @@
-# Ergonomic Posture Assessment and Personalised Recommendation
+# Ergonomic Posture Assessment and Recommendation
 
-Real-data posture-state and transition assessment pipeline built on the official UCI Smartphone-Based Recognition of Human Activities and Postural Transitions dataset. The repository trains on the real benchmark split, predicts ergonomic posture-state groups, and maps them into user-facing movement recommendations.
+This repository documents a small student research project on ergonomic posture assessment using wearable IMU data. The work uses the UCI Smartphone-Based Recognition of Human Activities and Postural Transitions dataset and studies whether the original benchmark labels can be regrouped into broader posture-risk categories that are easier to interpret in an occupational-health context.
 
-![Real-data overview](reports/results/posture_overview.png)
+Rather than treating the task purely as activity recognition, the pipeline maps the original labels into four ergonomic states and then attaches a short recommendation to the selected prediction. The objective is to explore a simple, reproducible baseline for posture-state assessment rather than to claim a deployable intervention system.
+
+![Posture overview](reports/results/posture_overview.png)
+
+## Research question
+
+Can smartphone IMU benchmark data be reorganised into ergonomic posture-state groups and still support high-quality classification on the official subject-disjoint split?
 
 ## Dataset
 
-- UCI Smartphone-Based Recognition of Human Activities and Postural Transitions
-- 30 subjects, waist-mounted smartphone IMU, subject-disjoint train/test split
-- Original labels are grouped into ergonomic states:
+The project uses the UCI Smartphone-Based Recognition of Human Activities and Postural Transitions dataset stored locally under `data/raw/postural_transitions/`.
+
+Relevant characteristics:
+- 30 subjects
+- waist-mounted smartphone inertial sensors
+- official train/test split with subject separation
+- original transition labels remapped into:
   - `static_posture`
   - `dynamic_gait`
   - `sit_stand_transition`
   - `floor_transfer_transition`
 
-## Current Results
+## Method
+
+The pipeline:
+- loads the released feature matrices from the benchmark split
+- maps the original activity and transition labels into ergonomic groups
+- trains two baseline classifiers:
+  - Histogram Gradient Boosting
+  - k-NN with feature scaling
+- selects the stronger model by test-set accuracy
+- exports predictions and a rule-based recommendation for the selected posture group
+
+The recommendation layer is deliberately simple. It is included to show how model output could be translated into a human-readable ergonomic note, not as a validated intervention protocol.
+
+## Results
+
+Checked-in results from the current run are:
 
 | Model | Evaluation | Accuracy | Macro F1 |
 | --- | --- | ---: | ---: |
 | HistGradientBoosting | Official subject-disjoint test split | 0.997 | 0.969 |
 | k-NN | Official subject-disjoint test split | 0.992 | 0.940 |
 
-## What The Pipeline Does
-
-- loads the real UCI posture-transition feature matrices
-- groups raw labels into ergonomic posture-state categories
-- trains Gradient Boosting and k-NN baselines
-- generates posture recommendations from predicted ergonomic groups
-- saves predictions, plots, and model artifacts to tracked result folders
-
-## Run It
+## Reproducing the pipeline
 
 ```bash
 python -m pip install -r requirements.txt
@@ -37,7 +54,7 @@ python -m pip install -e .
 python -m ergonomic_posture.cli --output-dir reports/results --model-dir models/results
 ```
 
-## Output Files
+## Repository outputs
 
 - `reports/results/metrics.json`
 - `reports/results/posture_predictions.csv`
@@ -45,7 +62,9 @@ python -m ergonomic_posture.cli --output-dir reports/results --model-dir models/
 - `models/results/best_posture_model.joblib`
 - `notebooks/real_data_walkthrough.ipynb`
 
-## Notes
+## Limitations
 
-- Raw downloaded files live in `data/raw/` and are ignored by git.
-- Recommendations are derived from real predicted posture-state groups, not synthetic labels.
+- This is an offline benchmark study, not a live monitoring system.
+- The ergonomic categories are manually defined from the benchmark labels.
+- The recommendation text is heuristic and should be read as a simple post-processing layer.
+- Raw downloaded files live in `data/raw/` and are intentionally excluded from version control.
